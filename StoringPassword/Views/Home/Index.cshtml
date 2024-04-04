@@ -1,0 +1,173 @@
+﻿@{
+    ViewBag.Title = "Home Page";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div id="sendmessagecontainer" style="display: none;">
+    <input type="submit" id="logoutbutton" name="logoutbutton" value="Logout" class="btn btn-danger">
+    <h2>Send Message</h2>
+    <form id="sendmessageform" method="post">
+        <div class="form-group">
+            <label>Message:</label>
+            <input type="text" id="message" name="message" class="form-control" />
+        </div>
+        <input type="submit" value="Send" id="sendmessagebutton" class="btn btn-primary">
+    </form>
+    <div>
+        <h2>Messages</h2>
+        <ul id="messagelist">
+
+        </ul>
+    </div>
+</div>
+
+<div>
+    <form id="loginform" method="post">
+        <div asp-validation-summary="All"></div>
+        <h2>Login</h2>
+        <div class="form-group">
+            <label>Login</label>
+            <input id="login" name="login" type="text" class="form-control" required />
+        </div>
+        <div class="form-group">
+            <label>Password</label>
+            <input id="password" name="password" type="password" class="form-control" required />
+        </div>
+        <input type="submit" value="Login" id="loginbutton" class="btn btn-primary">
+    </form>
+</div>
+
+<div>
+    <form id="registerform" method="post">
+        <div asp-validation-summary="All"></div>
+        <h2>Register</h2>
+        <div class="form-group">
+            <label for="FirstName" class="control-label">FirstName</label>
+            <input id="firstname" name="firstname" type="text" class="form-control" />
+        </div>
+        <div class="form-group">
+            <label for="LastName" class="control-label">LastName</label>
+            <input id="lastname" name="lastname" type="text" class="form-control" />
+        </div>
+        <div class="form-group">
+            <label for="Login" class="control-label">Login</label>
+            <input id="login" name="login" type="text" class="form-control" />
+        </div>
+        <div class="form-group">
+            <label for="Password" class="control-label">Password</label>
+            <input id="password" name="password" type="password" class="form-control" />
+        </div>
+        <div class="form-group">
+            <label for="PasswordConfirm" class="control-label">PasswordConfirm</label>
+            <input id="passwordconfirm" name="passwordconfirm" type="password" class="form-control" />
+        </div>
+        <input type="submit" value="Check in" id="registerbutton" class="btn btn-primary">
+    </form>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            $("#loginbutton").click(function () {
+                event.preventDefault();
+                $.ajax({
+                    type: "POST",
+                    url: '@Url.Action("Login", "Account")',
+                    data: $("#loginform").serialize(),
+                    success: function (response) {
+                        if (response.success) {
+                            alert("Login successful!");
+                            $("#loginform").hide();
+                            $("#registerform").hide();
+                            $("#sendmessagecontainer").show();
+                            updateMessageList();
+                        }
+                        else {
+                            alert(response.error);
+                        }
+                    },
+                    error: function (xhr, textStatus, errorThrown) {
+                        alert(xhr.status);
+                    }
+                });
+            });
+
+            $("#registerbutton").on("click", function () {
+                event.preventDefault();
+                $.ajax({
+                    type: 'POST',
+                    url: '@Url.Action("Register", "Account")',
+                    data: $("#registerform").serialize(),
+                    success: function (response) {
+                        if (response.success) 
+                        {
+                            alert("Registration successful!");
+                        }
+                        else 
+                        {
+                            alert(response.error);
+                        }
+                    },
+                    error: function (xhr, textStatus, errorThrown) {
+                        alert(xhr.status);
+                    }
+                });
+            });
+
+            $("#sendmessagebutton").click(function () {
+                event.preventDefault();
+                $.ajax({
+                    type: "POST",
+                    url: '@Url.Action("AddMessage", "Home")',
+                    data: $("#sendmessageform").serialize(),
+                    success: function (response) {
+                        if (response.success) {
+                            alert("Message sent successfully!");
+                            updateMessageList();
+                        }
+                        else { 
+                            alert(response.error);
+                        }
+                    },
+                    error: function (xhr, textStatus, errorThrown) {
+                        alert(xhr.status);
+                    }
+                });
+            });
+
+            $("#logoutbutton").click(function () {
+                $.ajax({
+                    type: "POST",
+                    url: '@Url.Action("Logout", "Home")',
+                    success: function (response) {
+                        window.location.href = '@Url.Action("Index", "Home")';
+                    },
+                    error: function (xhr, textStatus, errorThrown) {
+                        console.error(xhr.status + ': ' + xhr.responseText);
+                    }
+                });
+            });
+        });
+
+        function updateMessageList() {
+            $.ajax({
+                type: "GET",
+                url: '@Url.Action("GetMessages", "Home")',
+                dataType: 'json',
+                success: function (messages) {
+                    $("#messagelist").empty();
+                    messages.forEach(function (message) {
+                        var messageDate = new Date(message.messageDate);
+                        var formattedDate = messageDate.toLocaleString();
+                        $("#messagelist").append('<li><strong>User:</strong> ' + message.user + '<br><strong>Message:</strong> ' + message.text + '<br><strong>Date:</strong> ' + formattedDate + '</li>');
+                    });
+                },
+                error: function (xhr, textStatus, errorThrown) {
+                    var errorMessage = xhr.status + ': ' + xhr.responseText;
+                    alert(errorMessage);
+                }
+            });
+        }
+
+    </script>
+}
